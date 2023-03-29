@@ -33,7 +33,7 @@ async fn run() {
                 "-vf",
                 r"scale=320:-1,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
                 "-fs",
-                "1M",
+                "800K",
                 gif_name,
             ];
             let mut cmd = Command::new("ffmpeg");
@@ -50,7 +50,13 @@ async fn run() {
 
                 let sticker_set = bot.get_sticker_set(pack_name).send().await.unwrap();
                 let set_name = sticker_set.name.clone();
-                fs::create_dir(&set_name).await?;
+               let result= fs::create_dir(&set_name).await;
+                if let Err(e) = result {
+                    if e.kind() != std::io::ErrorKind::AlreadyExists {
+                        println!("error:{}", e);
+                        return ResponseResult::Err(teloxide::RequestError::Io(e));
+                    }
+                }
                 let bot = Arc::new(bot);
 
                 for (key, sticker) in sticker_set.stickers.into_iter().enumerate() {
@@ -76,9 +82,9 @@ async fn run() {
                                 "-i",
                                 &path,
                                 "-vf",
-                                r"scale=320:-1,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+                                r"split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
                                 "-fs",
-                                "1M",
+                                "800K",
                                 gif_name,
                             ];
                             let mut cmd = Command::new("ffmpeg");
